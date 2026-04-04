@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/0x2E/fusion/internal/cleanup"
 	"github.com/0x2E/fusion/internal/config"
 	"github.com/0x2E/fusion/internal/handler"
 	"github.com/0x2E/fusion/internal/pull"
@@ -77,6 +78,15 @@ func run() error {
 		}
 		return nil
 	})
+
+	if cleaner := cleanup.New(st, cfg); cleaner != nil {
+		g.Go(func() error {
+			if err := cleaner.Start(ctx); err != nil && !errors.Is(err, context.Canceled) {
+				return err
+			}
+			return nil
+		})
+	}
 
 	g.Go(func() error {
 		<-ctx.Done()

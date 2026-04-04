@@ -22,6 +22,7 @@
               pkgs.gotools  # provides goimports
               pkgs.nodejs_24
               pkgs.pnpm
+              pkgs.sqlite
             ];
 
             shellHook = ''

@@ -422,6 +422,19 @@ func (s *Store) UpdateItemCrawled(id int64, content string, crawledAt int64) err
 	return err
 }
 
+func (s *Store) DeleteOldReadItems(cutoff int64) (int64, error) {
+	result, err := s.db.Exec(`
+		DELETE FROM items
+		WHERE unread = 0
+		  AND created_at < :cutoff
+		  AND id NOT IN (SELECT item_id FROM bookmarks WHERE item_id IS NOT NULL)
+	`, sql.Named("cutoff", cutoff))
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 func (s *Store) ItemExists(feedID int64, guid string) (bool, error) {
 	var exists bool
 	err := s.db.QueryRow(`SELECT EXISTS(SELECT 1 FROM items WHERE feed_id = :feed_id AND guid = :guid)`,

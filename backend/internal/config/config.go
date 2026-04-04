@@ -27,6 +27,8 @@ type Config struct {
 	LoginWindow    int // Login rate limit window in seconds (default: 60)
 	LoginBlock     int // Login block duration in seconds (default: 300)
 
+	ItemRetentionDays int // Days before read items are auto-deleted (0 = disabled)
+
 	LogLevel  string // Log level: DEBUG, INFO, WARN, ERROR (default: INFO)
 	LogFormat string // Log format: text, json, auto (default: auto)
 
@@ -97,6 +99,11 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	itemRetentionDays, err := getEnvInt("FUSION_ITEM_RETENTION_DAYS", 0, 0)
+	if err != nil {
+		return nil, err
+	}
+
 	loginRateLimit, err := getEnvInt("FUSION_LOGIN_RATE_LIMIT", 10, 1)
 	if err != nil {
 		return nil, err
@@ -136,6 +143,7 @@ func Load() (*Config, error) {
 		CORSAllowedOrigins: corsAllowedOrigins,
 		TrustedProxies:     trustedProxies,
 		AllowPrivateFeeds:  allowPrivateFeeds,
+		ItemRetentionDays:  itemRetentionDays,
 		PullInterval:       pullInterval,
 		PullTimeout:        pullTimeout,
 		PullConcurrency:    pullConcurrency,
