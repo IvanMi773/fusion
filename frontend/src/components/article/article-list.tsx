@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArticleItem } from "./article-item";
 import { ContentHeader } from "@/components/layout/content-header";
@@ -351,6 +351,7 @@ export function ArticleList() {
               </>
             )}
           </div>
+          <ScrollBar orientation="horizontal" />
         </ScrollArea>
       </div>
     </div>

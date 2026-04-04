@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useUrlState } from "@/hooks/use-url-state";
 import type { Item } from "@/lib/api";
 import {
@@ -27,7 +27,6 @@ import {
   useStarredItems,
 } from "@/queries/bookmarks";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
-import { useSwipeNavigation } from "@/hooks/use-swipe";
 import { useI18n } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
 import { processArticleContent } from "@/lib/content";
@@ -167,8 +166,6 @@ export function ArticleDrawer() {
       onOpenOriginal: handleOpenOriginal,
     });
 
-  const { onTouchStart, onTouchEnd } = useSwipeNavigation(goToNext, goToPrevious);
-
   return (
     <Sheet open={selectedArticleId !== null} onOpenChange={handleOpenChange}>
       <SheetContent
@@ -177,11 +174,7 @@ export function ArticleDrawer() {
         showCloseButton={false}
       >
         {article && (
-          <div
-            className="flex h-full flex-col"
-            onTouchStart={onTouchStart}
-            onTouchEnd={onTouchEnd}
-          >
+          <div className="flex h-full flex-col">
             {/* Header */}
             <div className="flex items-center justify-between border-b px-4 py-3 sm:px-6">
               <div className="flex items-center gap-2">
@@ -307,6 +300,7 @@ export function ArticleDrawer() {
                   }}
                 />
               </article>
+              <ScrollBar orientation="horizontal" />
             </ScrollArea>
 
             {/* Footer - Navigation */}
