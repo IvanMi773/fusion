@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import {
   Circle,
   CircleCheck,
@@ -15,17 +15,15 @@ import { useUrlState } from "@/hooks/use-url-state";
 import type { Item } from "@/lib/api";
 import {
   useItem,
-  useItems,
   useMarkItemsRead,
   useMarkItemsUnread,
 } from "@/queries/items";
 import { useFeedLookup } from "@/queries/feeds";
 import {
-  useBookmarkLookup,
   useCreateBookmark,
   useDeleteBookmark,
-  useStarredItems,
 } from "@/queries/bookmarks";
+import { useArticleList } from "@/hooks/use-article-list";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { useI18n } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
@@ -45,33 +43,23 @@ export function ArticleDrawer() {
     articleFilter,
   } = useUrlState();
   const { getFeedById } = useFeedLookup();
-  const isStarredMode = articleFilter === "starred";
 
-  const itemsQuery = useItems({
-    feedId: selectedFeedId,
-    groupId: selectedGroupId,
-    unread: articleFilter === "unread" ? true : undefined,
-  });
-  const articles = useMemo(
-    () => itemsQuery.data?.pages.flatMap((p) => p.data) ?? [],
-    [itemsQuery.data],
-  );
-  const starredArticles = useStarredItems({
-    feedId: selectedFeedId,
-    groupId: selectedGroupId,
-  });
-  const listArticles = isStarredMode ? starredArticles : articles;
+  const { articles, isStarredMode, isItemStarred, getBookmarkByItemId } =
+    useArticleList({
+      feedId: selectedFeedId,
+      groupId: selectedGroupId,
+      articleFilter,
+    });
 
   const markRead = useMarkItemsRead();
   const markUnread = useMarkItemsUnread();
-  const { isItemStarred, getBookmarkByItemId } = useBookmarkLookup();
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
 
-  const articleIds = listArticles.map((a) => a.id);
+  const articleIds = articles.map((a) => a.id);
 
   const storeArticle = selectedArticleId
-    ? (listArticles.find((i) => i.id === selectedArticleId) ?? null)
+    ? (articles.find((i) => i.id === selectedArticleId) ?? null)
     : null;
 
   const shouldFetchArticle =
@@ -170,7 +158,7 @@ export function ArticleDrawer() {
     <Sheet open={selectedArticleId !== null} onOpenChange={handleOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-[max(720px,50vw)] p-0"
+        className="data-[side=right]:w-full data-[side=right]:sm:max-w-[max(840px,60vw)] p-0"
         showCloseButton={false}
       >
         {article && (
@@ -206,28 +194,23 @@ export function ArticleDrawer() {
                   {starred ? t("article.action.unstar") : t("article.action.star")}
                 </Button>
                 <Button
-                  asChild={Boolean(safeArticleLink)}
+                  render={
+                    safeArticleLink ? (
+                      <a
+                        href={safeArticleLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      />
+                    ) : undefined
+                  }
                   variant="outline"
                   size="sm"
                   onClick={safeArticleLink ? undefined : handleOpenOriginal}
                   disabled={!safeArticleLink}
                   className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
                 >
-                  {safeArticleLink ? (
-                    <a
-                      href={safeArticleLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      {t("article.action.original")}
-                    </a>
-                  ) : (
-                    <>
-                      <ExternalLink className="h-4 w-4" />
-                      {t("article.action.original")}
-                    </>
-                  )}
+                  <ExternalLink className="h-4 w-4" />
+                  {t("article.action.original")}
                 </Button>
               </div>
 
@@ -291,7 +274,7 @@ export function ArticleDrawer() {
                 </div>
 
                 <div
-                  className="prose prose-neutral mt-6 min-w-0 max-w-none break-words dark:prose-invert"
+                  className="typeset typeset-article mt-6 min-w-0 max-w-none"
                   dangerouslySetInnerHTML={{
                     __html: processArticleContent(
                       article.content,
