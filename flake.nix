@@ -25,6 +25,9 @@
               pkgs.sqlite
             ];
 
+            FUSION_ALLOW_EMPTY_PASSWORD=true;
+            FUSION_PORT=8081;
+
             shellHook = ''
               echo "Fusion dev environment"
               echo "  Go:   $(go version)"
