@@ -76,8 +76,8 @@ export function useArticleList(filters: ArticleListFilters) {
       : itemsQuery.isFetchingNextPage,
     isStarredMode,
     fetchNextPage: isStarredMode
-      ? starred.fetchNextPage
-      : () => void itemsQuery.fetchNextPage(),
+      ? () => starred.fetchNextPage()
+      : () => itemsQuery.fetchNextPage(),
     isItemStarred,
     getBookmarkByItemId,
   };

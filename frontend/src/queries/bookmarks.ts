@@ -104,7 +104,7 @@ export interface StarredItemsResult {
   hasNextPage: boolean;
   isLoading: boolean;
   isFetchingNextPage: boolean;
-  fetchNextPage: () => void;
+  fetchNextPage: () => Promise<unknown>;
 }
 
 // useStarredItems is the paginated, server-filtered starred list. Filtering by
@@ -143,7 +143,7 @@ export function useStarredItems(
     hasNextPage: query.hasNextPage,
     isLoading: query.isLoading,
     isFetchingNextPage: query.isFetchingNextPage,
-    fetchNextPage: () => void query.fetchNextPage(),
+    fetchNextPage: () => query.fetchNextPage(),
   };
 }
 

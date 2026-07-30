@@ -1,10 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   Circle,
   CircleCheck,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  Loader2,
   Star,
   X,
 } from "lucide-react";
@@ -44,12 +45,19 @@ export function ArticleDrawer() {
   } = useUrlState();
   const { getFeedById } = useFeedLookup();
 
-  const { articles, isStarredMode, isItemStarred, getBookmarkByItemId } =
-    useArticleList({
-      feedId: selectedFeedId,
-      groupId: selectedGroupId,
-      articleFilter,
-    });
+  const {
+    articles,
+    hasMore,
+    isLoadingMore,
+    fetchNextPage,
+    isStarredMode,
+    isItemStarred,
+    getBookmarkByItemId,
+  } = useArticleList({
+    feedId: selectedFeedId,
+    groupId: selectedGroupId,
+    articleFilter,
+  });
 
   const markRead = useMarkItemsRead();
   const markUnread = useMarkItemsUnread();
@@ -88,6 +96,8 @@ export function ArticleDrawer() {
   const bookmark = article ? getBookmarkByItemId(article.id) : null;
   const starred = article ? isItemStarred(article.id) : false;
   const safeArticleLink = article ? toSafeExternalUrl(article.link) : null;
+  const articleRef = useRef<HTMLElement>(null);
+  const pendingNextRef = useRef(false);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -142,6 +152,12 @@ export function ArticleDrawer() {
     }
   };
 
+  useEffect(() => {
+    articleRef.current
+      ?.closest<HTMLElement>("[data-slot='scroll-area-viewport']")
+      ?.scrollTo({ top: 0 });
+  }, [article?.id]);
+
   const { goToNext, goToPrevious, hasNext, hasPrevious } =
     useArticleNavigation(articleIds, {
       enabled: selectedArticleId !== null,
@@ -153,6 +169,27 @@ export function ArticleDrawer() {
       },
       onOpenOriginal: handleOpenOriginal,
     });
+
+  useEffect(() => {
+    if (!pendingNextRef.current || !hasNext()) return;
+
+    pendingNextRef.current = false;
+    goToNext();
+  }, [articleIds, goToNext, hasNext, selectedArticleId]);
+
+  const handleNext = () => {
+    if (hasNext()) {
+      goToNext();
+      return;
+    }
+
+    if (isLoadingMore || !hasMore) return;
+
+    pendingNextRef.current = true;
+    void fetchNextPage().catch(() => {
+      pendingNextRef.current = false;
+    });
+  };
 
   return (
     <Sheet open={selectedArticleId !== null} onOpenChange={handleOpenChange}>
@@ -228,7 +265,10 @@ export function ArticleDrawer() {
 
             {/* Content */}
             <ScrollArea className="min-h-0 flex-1">
-              <article className="min-w-0 px-5 py-6 sm:px-12 sm:py-8">
+              <article
+                ref={articleRef}
+                className="min-w-0 px-5 py-6 sm:px-12 sm:py-8"
+              >
                 <div className="space-y-3">
                   <h1 className="text-[28px] font-bold leading-[1.3]">
                     {article.title}
@@ -301,10 +341,11 @@ export function ArticleDrawer() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={goToNext}
-                disabled={!hasNext()}
+                onClick={handleNext}
+                disabled={isLoadingMore || (!hasNext() && !hasMore)}
                 className="h-auto gap-1.5 px-3 py-2 text-[13px] font-medium text-muted-foreground"
               >
+                {isLoadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
                 {t("common.next")}
                 <ChevronRight className="h-4 w-4" />
               </Button>
